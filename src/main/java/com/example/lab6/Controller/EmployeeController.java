@@ -42,7 +42,7 @@ public class EmployeeController {
     @DeleteMapping("/delete/{index}")
     public ResponseEntity<?> deleteEmployee(@PathVariable int index) {
         if (index < 0 || index >= employees.size()) {
-            return ResponseEntity.status(404).body(new ApiResponse("index out of bound!"));
+            return ResponseEntity.status(400).body(new ApiResponse("index out of bound!"));
         }
         employees.remove(index);
         return ResponseEntity.ok(new ApiResponse("Employee deleted successfully"));
@@ -57,7 +57,7 @@ public class EmployeeController {
             }
         }
         if (filteredEmployees.isEmpty()) {
-            return ResponseEntity.status(404).body(new ApiResponse("No employees found for the specified position"));
+            return ResponseEntity.status(400).body(new ApiResponse("No employees found for the specified position"));
         }
         return null;
     }
