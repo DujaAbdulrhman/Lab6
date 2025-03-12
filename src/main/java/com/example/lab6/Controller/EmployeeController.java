@@ -48,8 +48,8 @@ public class EmployeeController {
         return ResponseEntity.ok(new ApiResponse("Employee deleted successfully"));
     }
 
-    @GetMapping("/search/{position}")
-    public ResponseEntity<ApiResponse> getByPosition(@PathVariable String position) {
+   @GetMapping("/search/{position}")
+    public ResponseEntity<List<EmployeeModel>> getByPosition(@PathVariable String position) {
         List<EmployeeModel> filteredEmployees = new ArrayList<>();
         for (EmployeeModel employee : employees) {
             if (employee.getPosition().equalsIgnoreCase(position)) {
@@ -57,9 +57,9 @@ public class EmployeeController {
             }
         }
         if (filteredEmployees.isEmpty()) {
-            return ResponseEntity.status(400).body(new ApiResponse("No employees found for the specified position"));
+            return ResponseEntity.status(404).body(null);
         }
-        return null;
+        return ResponseEntity.status(200).body(filteredEmployees); 
     }
 
     @GetMapping("/getByAge/{minAge}/{maxAge}")
@@ -85,5 +85,37 @@ public class EmployeeController {
             }
         }
         return ResponseEntity.status(200).body(noAnnualLeave);
+    }
+    @PostMapping("/applyLeave/{index}")
+    public ResponseEntity<?> applyForAnnualLeave(@PathVariable int index) {
+        if (index < 0 || index >= employees.size()) {
+            return ResponseEntity.status(404).body(new ApiResponse("Employee not found"));
+        }
+        EmployeeModel employee = employees.get(index);
+        if (employee.isOnLeave()) {
+            return ResponseEntity.status(400).body(new ApiResponse("Employee is already on leave"));
+        }
+        if (employee.getAnnualLeave() <= 0) {
+            return ResponseEntity.status(400).body(new ApiResponse("No annual leave remaining"));
+        }
+        employee.setOnLeave(true);
+        employee.setAnnualLeave(employee.getAnnualLeave() - 1);
+        return ResponseEntity.ok(new ApiResponse("Leave applied successfully"));
+    }
+
+    @PostMapping("/promote/{index}")
+    public ResponseEntity<ApiResponse> promoteEmployee(@PathVariable int index, @RequestParam String requesterRole) {
+        if (index < 0 || index >= employees.size()) {
+            return ResponseEntity.status(404).body(new ApiResponse("employee not found"));
+        }
+        if (!requesterRole.equals("supervisor")) {
+            return ResponseEntity.status(400).body(new ApiResponse("Only supervisors can promote employees"));
+        }
+        EmployeeModel employee = employees.get(index);
+        if (employee.getAge() < 30 || employee.isOnLeave()) {
+            return ResponseEntity.status(400).body(new ApiResponse("Employee does not meet promotion criteria"));
+        }
+        employee.setPosition("supervisor");
+        return ResponseEntity.ok(new ApiResponse("Employee promoted to supervisor"));
     }
 }
